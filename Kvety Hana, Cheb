@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kvety Hana — Cheb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #c8424a;
+    --rose-light: #f5dfe0;
+    --rose-dark: #8b2a30;
+    --green: #3d5c3a;
+    --green-light: #eaf0e8;
+    --cream: #faf6f0;
+    --warm: #f0e8dc;
+    --text: #1a1208;
+    --text-muted: #6b5c4e;
+    --gold: #c4a44a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ─── LOADER ─── */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: #0d0805;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .loader-petals {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+
+  .petal {
+    position: absolute;
+    width: 52px;
+    height: 80px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    transform-origin: center bottom;
+    opacity: 0;
+    animation: petalBloom 3.2s cubic-bezier(.4,0,.2,1) forwards;
+  }
+
+  .petal:nth-child(1) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(0deg); animation-delay:0.1s; }
+  .petal:nth-child(2) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(45deg); animation-delay:0.25s; }
+  .petal:nth-child(3) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(90deg); animation-delay:0.4s; }
+  .petal:nth-child(4) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(135deg); animation-delay:0.55s; }
+  .petal:nth-child(5) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(180deg); animation-delay:0.7s; }
+  .petal:nth-child(6) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(225deg); animation-delay:0.85s; }
+  .petal:nth-child(7) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(270deg); animation-delay:1s; }
+  .petal:nth-child(8) { background: linear-gradient(160deg,#e8707a,#c8424a); left:54px; top:0; transform:rotate(315deg); animation-delay:1.15s; }
+
+  .loader-center {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: #ffd97a;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    animation: centerPop 0.5s ease 1.5s forwards;
+    box-shadow: 0 0 20px #ffd97a88;
+  }
+
+  .loader-name {
+    margin-top: 32px;
+    color: #fff;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 300;
+    letter-spacing: .3em;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.8s forwards;
+  }
+
+  .loader-sub {
+    color: var(--gold);
+    font-family: 'Jost', sans-serif;
+    font-size: .75rem;
+    font-weight: 300;
+    letter-spacing: .5em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 2.1s forwards;
+    margin-top: 6px;
+  }
+
+  .loader-line {
+    width: 0;
+    height: 1px;
+    background: var(--rose);
+    animation: lineGrow 0.9s ease 2.5s forwards;
+    margin-top: 16px;
+  }
+
+  @keyframes petalBloom {
+    0% { opacity:0; transform: rotate(var(--r,0deg)) scale(0); }
+    50% { opacity:.9; transform: rotate(var(--r,0deg)) scale(1.05); }
+    100% { opacity:1; transform: rotate(var(--r,0deg)) scale(1); }
+  }
+  @keyframes centerPop {
+    to { transform: translate(-50%,-50%) scale(1); }
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(12px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+  @keyframes lineGrow {
+    to { width: 80px; }
+  }
+  @keyframes loaderFadeOut {
+    to { opacity:0; pointer-events:none; }
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .4s ease;
+  }
+
+  nav.scrolled {
+    background: rgba(250,246,240,0.96);
+    backdrop-filter: blur(12px);
+    padding: 14px 40px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.07);
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: .15em;
+    text-decoration: none;
+    transition: color .3s;
+  }
+
+  nav.scrolled .nav-logo { color: var(--text); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+    font-size: .8rem;
+    font-weight: 300;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    transition: color .3s;
+  }
+
+  nav.scrolled .nav-links a { color: var(--text-muted); }
+  .nav-links a:hover { color: var(--rose) !important; }
+
+  /* language selector */
+  .lang-sel {
+    display: flex;
+    gap: 8px;
+  }
+  .lang-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,.3);
+    color: rgba(255,255,255,.7);
+    font-family: 'Jost';
+    font-size: .7rem;
+    font-weight: 400;
+    letter-spacing: .1em;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all .3s;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: #fff;
+  }
+  nav.scrolled .lang-btn { border-color: var(--text-muted); color: var(--text-muted); }
+  nav.scrolled .lang-btn.active, nav.scrolled .lang-btn:hover { background: var(--rose); border-color: var(--rose); color: #fff; }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px;
+  }
+  .hamburger span {
+    display: block;
+    width: 26px;
+    height: 1.5px;
+    background: #fff;
+    transition: all .3s;
+  }
+  nav.scrolled .hamburger span { background: var(--text); }
+
+  /* ─── HERO ─── */
+  #hero {
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(200,66,74,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 70% at 20% 80%, rgba(61,92,58,.15) 0%, transparent 60%),
+      linear-gradient(160deg, #1a0e0a 0%, #2d1510 40%, #1a1208 100%);
+  }
+
+  /* Floating flowers SVG bg */
+  .hero-flowers {
+    position: absolute;
+    inset: 0;
+    opacity: .12;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+    max-width: 900px;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    color: var(--gold);
+    font-size: .7rem;
+    font-weight: 300;
+    letter-spacing: .6em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp .8s ease 3.2s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 300;
+    color: #fff;
+    line-height: 1.05;
+    opacity: 0;
+    animation: fadeUp .9s ease 3.4s forwards;
+    letter-spacing: .02em;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--rose);
+  }
+
+  .hero-sub {
+    margin-top: 24px;
+    color: rgba(255,255,255,.6);
+    font-size: 1rem;
+    font-weight: 200;
+    letter-spacing: .08em;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp .8s ease 3.7s forwards;
+  }
+
+  .hero-cta {
+    margin-top: 48px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp .8s ease 4s forwards;
+  }
+
+  .btn-primary {
+    background: var(--rose);
+    color: #fff;
+    text-decoration: none;
+    padding: 14px 36px;
+    font-family: 'Jost';
+    font-size: .8rem;
+    font-weight: 400;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    transition: all .3s;
+    border: 1px solid var(--rose);
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--rose-dark); border-color: var(--rose-dark); }
+
+  .btn-outline {
+    border: 1px solid rgba(255,255,255,.4);
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+    padding: 14px 36px;
+    font-family: 'Jost';
+    font-size: .8rem;
+    font-weight: 400;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    transition: all .3s;
+    display: inline-block;
+  }
+  .btn-outline:hover { background: rgba(255,255,255,.1); }
+
+  .hero-scroll {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeUp .8s ease 4.3s forwards;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, rgba(255,255,255,.4), transparent);
+    animation: scrollPulse 2s ease infinite;
+  }
+  .scroll-txt {
+    color: rgba(255,255,255,.4);
+    font-size: .65rem;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+  @keyframes scrollPulse {
+    0%,100% { opacity:.4; }
+    50% { opacity:1; }
+  }
+
+  /* ─── SECTIONS COMMON ─── */
+  section { padding: 100px 40px; }
+
+  .section-tag {
+    font-size: .7rem;
+    font-weight: 300;
+    letter-spacing: .5em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--rose);
+  }
+
+  .divider {
+    width: 48px;
+    height: 1px;
+    background: var(--rose);
+    margin: 24px 0;
+  }
+
+  /* reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ─── ABOUT / INTRO ─── */
+  #about {
+    background: var(--cream);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .about-visual {
+    position: relative;
+    height: 560px;
+  }
+
+  .about-img-frame {
+    position: absolute;
+    border: 1px solid var(--rose-light);
+    background: var(--warm);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .about-img-frame.main {
+    width: 72%;
+    height: 80%;
+    top: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--rose-light) 0%, var(--warm) 100%);
+  }
+
+  .about-img-frame.accent {
+    width: 45%;
+    height: 48%;
+    bottom: 0;
+    left: 0;
+    background: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flower-icon-lg {
+    font-size: 6rem;
+    line-height: 1;
+  }
+
+  .about-badge {
+    position: absolute;
+    bottom: 30%;
+    right: -20px;
+    background: var(--rose);
+    color: #fff;
+    padding: 20px 24px;
+    text-align: center;
+    z-index: 2;
+    box-shadow: 0 8px 32px rgba(200,66,74,.3);
+  }
+  .about-badge-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    display: block;
+    line-height: 1;
+  }
+  .about-badge-txt {
+    font-size: .65rem;
+    font-weight: 300;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    opacity: .85;
+  }
+
+  .about-text .section-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.85;
+    margin-bottom: 20px;
+  }
+
+  /* ─── ADVANTAGES ─── */
+  #advantages {
+    background: var(--text);
+    padding: 100px 40px;
+  }
+
+  .advantages-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .advantages-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+
+  .advantages-header .section-title { color: #fff; }
+  .advantages-header .divider { background: var(--gold); }
+
+  .adv-intro {
+    color: rgba(255,255,255,.5);
+    font-size: 1rem;
+    font-weight: 200;
+    line-height: 1.8;
+  }
+
+  .advantages-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .adv-card {
+    background: rgba(255,255,255,.04);
+    padding: 48px 32px;
+    transition: background .3s;
+    border: 1px solid rgba(255,255,255,.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .adv-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--rose);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .4s ease;
+  }
+  .adv-card:hover::before { transform: scaleX(1); }
+  .adv-card:hover { background: rgba(255,255,255,.07); }
+
+  .adv-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: rgba(200,66,74,.25);
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+
+  .adv-icon { font-size: 1.8rem; margin-bottom: 16px; }
+
+  .adv-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  .adv-desc {
+    color: rgba(255,255,255,.45);
+    font-size: .88rem;
+    font-weight: 300;
+    line-height: 1.75;
+  }
+
+  /* ─── SERVICES ─── */
+  #services {
+    background: var(--cream);
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .services-header {
+    text-align: center;
+    margin-bottom: 70px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .svc-card {
+    background: var(--warm);
+    padding: 56px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: all .4s ease;
+    cursor: default;
+  }
+
+  .svc-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--rose);
+    opacity: 0;
+    transition: opacity .4s;
+  }
+
+  .svc-card:hover::after { opacity: .95; }
+
+  .svc-content {
+    position: relative;
+    z-index: 1;
+    transition: color .3s;
+  }
+
+  .svc-card:hover .svc-title,
+  .svc-card:hover .svc-desc,
+  .svc-card:hover .svc-num { color: rgba(255,255,255,.9); }
+  .svc-card:hover .svc-icon { filter: brightness(5); }
+
+  .svc-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 4rem;
+    font-weight: 300;
+    color: var(--rose-light);
+    line-height: 1;
+    margin-bottom: 8px;
+    transition: color .3s;
+  }
+
+  .svc-icon { font-size: 2rem; margin-bottom: 16px; transition: filter .3s; }
+
+  .svc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 14px;
+    transition: color .3s;
+  }
+
+  .svc-desc {
+    color: var(--text-muted);
+    font-size: .9rem;
+    font-weight: 300;
+    line-height: 1.75;
+    transition: color .3s;
+  }
+
+  /* ─── ASSORTMENT ─── */
+  #assortment {
+    background: var(--green);
+    padding: 100px 40px;
+  }
+
+  .assortment-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .assortment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 60px;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .assortment-header .section-title { color: #fff; }
+  .assortment-header .section-tag { color: var(--gold); }
+  .assortment-header .divider { background: var(--gold); }
+
+  .assortment-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .product-card {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: all .3s;
+  }
+  .product-card:hover {
+    background: rgba(255,255,255,.14);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.3);
+  }
+
+  .product-thumb {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.05);
+    font-size: 4rem;
+  }
+
+  .product-info {
+    padding: 20px;
+  }
+
+  .product-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .product-desc {
+    font-size: .82rem;
+    font-weight: 300;
+    color: rgba(255,255,255,.5);
+    line-height: 1.6;
+  }
+
+  .product-tag {
+    display: inline-block;
+    margin-top: 12px;
+    background: rgba(200,66,74,.3);
+    color: var(--rose-light);
+    font-size: .68rem;
+    font-weight: 400;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 1px;
+  }
+
+  /* ─── CONTACT / CTA ─── */
+  #contact {
+    background: var(--rose);
+    padding: 100px 40px;
+    text-align: center;
+  }
+
+  .contact-inner {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  #contact .section-tag { color: rgba(255,255,255,.6); }
+
+  .contact-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 300;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+
+  .contact-sub {
+    color: rgba(255,255,255,.7);
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 40px;
+  }
+
+  .contact-info {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+
+  .contact-item {
+    text-align: center;
+  }
+
+  .contact-label {
+    font-size: .68rem;
+    font-weight: 300;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 6px;
+  }
+
+  .contact-value {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 300;
+    text-decoration: none;
+  }
+  .contact-value:hover { text-decoration: underline; }
+
+  .btn-white {
+    background: #fff;
+    color: var(--rose);
+    text-decoration: none;
+    padding: 16px 44px;
+    font-family: 'Jost';
+    font-size: .8rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    transition: all .3s;
+    display: inline-block;
+    margin-top: 8px;
+  }
+  .btn-white:hover { background: var(--rose-dark); color: #fff; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--text);
+    padding: 48px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: .1em;
+  }
+
+  .footer-txt {
+    color: rgba(255,255,255,.35);
+    font-size: .78rem;
+    font-weight: 300;
+    text-align: center;
+  }
+
+  .footer-hours {
+    color: rgba(255,255,255,.45);
+    font-size: .78rem;
+    font-weight: 300;
+    text-align: right;
+    line-height: 1.7;
+  }
+
+  /* ─── MOBILE MENU ─── */
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    background: var(--text);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .mobile-menu.open { opacity: 1; pointer-events: all; }
+  .mobile-menu a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: .1em;
+    transition: color .3s;
+  }
+  .mobile-menu a:hover { color: var(--rose); }
+  .close-menu {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+  }
+  .mobile-lang {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* ─── BACKGROUND PETAL DECO ─── */
+  .bg-petal-deco {
+    position: absolute;
+    pointer-events: none;
+    opacity: .06;
+    z-index: 0;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1100px) {
+    .advantages-grid { grid-template-columns: repeat(2, 1fr); }
+    .assortment-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 860px) {
+    nav { padding: 16px 24px; }
+    nav.scrolled { padding: 12px 24px; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    section { padding: 70px 24px; }
+
+    #about {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      padding: 70px 24px;
+    }
+    .about-visual { height: 360px; }
+    .about-badge { right: 10px; }
+
+    .advantages-header { grid-template-columns: 1fr; gap: 24px; }
+    .advantages-grid { grid-template-columns: 1fr 1fr; }
+    .services-grid { grid-template-columns: 1fr; }
+
+    .assortment-header { flex-direction: column; align-items: flex-start; }
+    .assortment-grid { grid-template-columns: repeat(2, 1fr); }
+
+    footer { flex-direction: column; text-align: center; }
+    .footer-hours { text-align: center; }
+  }
+
+  @media (max-width: 560px) {
+    .advantages-grid { grid-template-columns: 1fr; }
+    .assortment-grid { grid-template-columns: 1fr 1fr; }
+    .hero-title { font-size: 3rem; }
+    .contact-info { flex-direction: column; gap: 20px; }
+    .hero-cta { flex-direction: column; align-items: center; }
+    .lang-sel { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-petals">
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="petal"></div>
+    <div class="loader-center"></div>
+  </div>
+  <div class="loader-name">Kvety Hana</div>
+  <div class="loader-sub" id="loader-sub">Cheb · Zahradní 607/9</div>
+  <div class="loader-line"></div>
+</div>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="close-menu" onclick="toggleMenu()">✕</button>
+  <a href="#about" onclick="toggleMenu()" data-key="nav_about">O nás</a>
+  <a href="#advantages" onclick="toggleMenu()" data-key="nav_adv">Výhody</a>
+  <a href="#services" onclick="toggleMenu()" data-key="nav_svc">Služby</a>
+  <a href="#assortment" onclick="toggleMenu()" data-key="nav_ass">Sortiment</a>
+  <a href="#contact" onclick="toggleMenu()" data-key="nav_cnt">Kontakt</a>
+  <div class="mobile-lang">
+    <button class="lang-btn active" onclick="setLang('cs')">CS</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('de')">DE</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">Kvety Hana</a>
+  <ul class="nav-links">
+    <li><a href="#about" data-key="nav_about">O nás</a></li>
+    <li><a href="#advantages" data-key="nav_adv">Výhody</a></li>
+    <li><a href="#services" data-key="nav_svc">Služby</a></li>
+    <li><a href="#assortment" data-key="nav_ass">Sortiment</a></li>
+    <li><a href="#contact" data-key="nav_cnt">Kontakt</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="lang-sel">
+      <button class="lang-btn active" onclick="setLang('cs')">CS</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+
+  <!-- Decorative SVG flowers -->
+  <svg class="hero-flowers" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="200" cy="150" r="80" fill="#c8424a"/>
+    <circle cx="200" cy="70" r="50" fill="#c8424a"/>
+    <circle cx="200" cy="230" r="50" fill="#c8424a"/>
+    <circle cx="120" cy="150" r="50" fill="#c8424a"/>
+    <circle cx="280" cy="150" r="50" fill="#c8424a"/>
+    <circle cx="200" cy="150" r="24" fill="#ffd97a"/>
+
+    <circle cx="1240" cy="700" r="60" fill="#3d5c3a"/>
+    <circle cx="1240" cy="640" r="40" fill="#3d5c3a"/>
+    <circle cx="1240" cy="760" r="40" fill="#3d5c3a"/>
+    <circle cx="1180" cy="700" r="40" fill="#3d5c3a"/>
+    <circle cx="1300" cy="700" r="40" fill="#3d5c3a"/>
+    <circle cx="1240" cy="700" r="18" fill="#ffd97a"/>
+
+    <circle cx="1380" cy="200" r="40" fill="#c8424a"/>
+    <circle cx="1380" cy="160" r="28" fill="#c8424a"/>
+    <circle cx="1380" cy="240" r="28" fill="#c8424a"/>
+    <circle cx="1340" cy="200" r="28" fill="#c8424a"/>
+    <circle cx="1420" cy="200" r="28" fill="#c8424a"/>
+    <circle cx="1380" cy="200" r="14" fill="#ffd97a"/>
+
+    <circle cx="80" cy="780" r="36" fill="#c8424a"/>
+    <circle cx="80" cy="744" r="24" fill="#c8424a"/>
+    <circle cx="80" cy="816" r="24" fill="#c8424a"/>
+    <circle cx="44" cy="780" r="24" fill="#c8424a"/>
+    <circle cx="116" cy="780" r="24" fill="#c8424a"/>
+    <circle cx="80" cy="780" r="14" fill="#ffd97a"/>
+
+    <!-- stems -->
+    <line x1="200" y1="270" x2="200" y2="440" stroke="#3d5c3a" stroke-width="3"/>
+    <line x1="1240" y1="760" x2="1240" y2="900" stroke="#3d5c3a" stroke-width="3"/>
+    <line x1="80" y1="816" x2="80" y2="900" stroke="#3d5c3a" stroke-width="3"/>
+
+    <!-- leaves -->
+    <ellipse cx="210" cy="340" rx="28" ry="14" fill="#3d5c3a" transform="rotate(-30 210 340)"/>
+    <ellipse cx="190" cy="380" rx="28" ry="14" fill="#3d5c3a" transform="rotate(30 190 380)"/>
+  </svg>
+
+  <div class="hero-content">
+    <div class="hero-tag" data-key="hero_tag">✦ Cheb, Česká republika</div>
+    <h1 class="hero-title" data-key="hero_title">Krása přírody<br>ve <em>vašem domově</em></h1>
+    <p class="hero-sub" data-key="hero_sub">Zahradní 607/9 · Cheb 2 · +420 354 434 322</p>
+    <div class="hero-cta">
+      <a href="#services" class="btn-primary" data-key="hero_cta1">Naše služby</a>
+      <a href="#contact" class="btn-outline" data-key="hero_cta2">Kontaktujte nás</a>
+    </div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-txt" data-key="scroll_down">Rolovat</div>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section style="padding:100px 40px;">
+  <div id="about">
+    <div class="about-visual reveal">
+      <div class="about-img-frame main">
+        <div style="text-align:center;padding:40px;">
+          <div style="font-size:5rem;line-height:1;">🌹</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose-dark);margin-top:16px;font-style:italic;" data-key="about_img_caption">S láskou k přírodě</div>
+        </div>
+      </div>
+      <div class="about-img-frame accent">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:3rem;line-height:1;">🌿</div>
+          <div style="color:rgba(255,255,255,.7);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;margin-top:8px;font-weight:300;" data-key="about_fresh">Čerstvé každý den</div>
+        </div>
+      </div>
+      <div class="about-badge reveal">
+        <span class="about-badge-num">10+</span>
+        <span class="about-badge-txt" data-key="about_years">let zkušeností</span>
+      </div>
+    </div>
+
+    <div class="about-text reveal">
+      <div class="section-tag" data-key="about_tag">O nás</div>
+      <h2 class="section-title" data-key="about_title">Váš <em>oblíbený</em> květinář<br>v Chebu</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-key="about_p1">Jsme rodinná květinářství s dlouholetou tradicí v srdci Chebu. Nabízíme čerstvé kvety a dekorace pro každou příležitost — od každodenní krásy až po nezapomenutelné oslavy.</p>
+      <p class="section-desc" data-key="about_p2">Naše pracovnice s vášní tvoří kytice, věnce a aranžmá, která přinášejí radost a život do každého prostoru. Svěřte se našim zkušeným rukám.</p>
+      <a href="#contact" class="btn-primary" style="margin-top:24px;display:inline-block;" data-key="about_cta">Navštivte nás</a>
+    </div>
+  </div>
+</section>
+
+<!-- ADVANTAGES -->
+<section id="advantages" style="padding:100px 40px;">
+  <div class="advantages-inner">
+    <div class="advantages-header reveal">
+      <div>
+        <div class="section-tag" style="color:var(--gold);" data-key="adv_tag">Proč my</div>
+        <h2 class="section-title" style="color:#fff;" data-key="adv_title">Naše <em style="color:var(--rose);">výhody</em></h2>
+        <div class="divider" style="background:var(--gold);"></div>
+      </div>
+      <div class="adv-intro" data-key="adv_intro">Každý zákazník je pro nás výjimečný. Přinášíme vám to nejlepší z přírody s péčí a odborností, na které se můžete spolehnout.</div>
+    </div>
+
+    <div class="advantages-grid">
+      <div class="adv-card reveal">
+        <div class="adv-number">01</div>
+        <div class="adv-icon">🌸</div>
+        <div class="adv-title" data-key="adv1_title">Čerstvost zaručena</div>
+        <div class="adv-desc" data-key="adv1_desc">Každý den dodáváme čerstvé květiny přímo od pěstitelů. Kytice, které u nás zakoupíte, vydrží déle a zůstanou krásné.</div>
+      </div>
+      <div class="adv-card reveal">
+        <div class="adv-number">02</div>
+        <div class="adv-icon">🎨</div>
+        <div class="adv-title" data-key="adv2_title">Individuální přístup</div>
+        <div class="adv-desc" data-key="adv2_desc">Každý zákazník dostane osobní péči. Pomůžeme vám vybrat ideální kytici nebo aranžmá pro každou příležitost.</div>
+      </div>
+      <div class="adv-card reveal">
+        <div class="adv-number">03</div>
+        <div class="adv-icon">💐</div>
+        <div class="adv-title" data-key="adv3_title">Bohatý sortiment</div>
+        <div class="adv-desc" data-key="adv3_desc">Nabízíme stovky druhů květin, dekorací, sezónních rostlin a doplňků pro váš domov i zahradu.</div>
+      </div>
+      <div class="adv-card reveal">
+        <div class="adv-number">04</div>
+        <div class="adv-icon">⭐</div>
+        <div class="adv-title" data-key="adv4_title">Hodnocení 4.8 ★</div>
+        <div class="adv-desc" data-key="adv4_desc">Naši zákazníci nás milují. Přes 180 kladných hodnocení na Google svědčí o naší kvalitě a profesionalitě.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" style="padding:100px 40px;">
+  <div style="max-width:1300px;margin:0 auto;">
+    <div class="services-header reveal">
+      <div class="section-tag" data-key="svc_tag">Služby</div>
+      <h2 class="section-title" data-key="svc_title">Co pro vás <em>uděláme</em></h2>
+      <div class="divider"></div>
+    </div>
+
+    <div class="services-grid">
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">01</div>
+          <div class="svc-icon">💍</div>
+          <div class="svc-title" data-key="svc1_title">Svatební výzdoba</div>
+          <div class="svc-desc" data-key="svc1_desc">Nevěstin buket, dekorace stolu, slavobrána, věnce — váš velký den bude nezapomenutelný s naší květinovou magií.</div>
+        </div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">02</div>
+          <div class="svc-icon">🎉</div>
+          <div class="svc-title" data-key="svc2_title">Slavnostní příležitosti</div>
+          <div class="svc-desc" data-key="svc2_desc">Narozeniny, výročí, promoce, svátky — přineste radost a krásu svým blízkým s originálním aranžmá.</div>
+        </div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">03</div>
+          <div class="svc-icon">🕯️</div>
+          <div class="svc-title" data-key="svc3_title">Pohřební věnce</div>
+          <div class="svc-desc" data-key="svc3_desc">V těžkých chvílích vám pomůžeme vyjádřit pietu a úctu prostřednictvím věnců a smuteční výzdoby.</div>
+        </div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">04</div>
+          <div class="svc-icon">🏢</div>
+          <div class="svc-title" data-key="svc4_title">Firemní dekorace</div>
+          <div class="svc-desc" data-key="svc4_desc">Proměňte svůj podnik v krásné místo. Nabízíme pravidelné dodávky čerstvých aranžmá pro kanceláře a hotely.</div>
+        </div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">05</div>
+          <div class="svc-icon">🌱</div>
+          <div class="svc-title" data-key="svc5_title">Pokojové rostliny</div>
+          <div class="svc-desc" data-key="svc5_desc">Velký výběr pokojových rostlin, orchidejí a sukulentů s odborným poradenstvím pro péči o ně.</div>
+        </div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-content">
+          <div class="svc-num">06</div>
+          <div class="svc-icon">🎁</div>
+          <div class="svc-title" data-key="svc6_title">Dárkové koše</div>
+          <div class="svc-desc" data-key="svc6_desc">Kombinace květin, sušených plodů a dekorací v krásném balení — ideální dar pro každého.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ASSORTMENT -->
+<section id="assortment" style="padding:100px 40px;">
+  <div class="assortment-inner">
+    <div class="assortment-header reveal">
+      <div>
+        <div class="section-tag" style="color:var(--gold);" data-key="ass_tag">Sortiment</div>
+        <h2 class="section-title" style="color:#fff;" data-key="ass_title">Naše <em style="color:var(--gold);">květiny</em></h2>
+        <div class="divider" style="background:var(--gold);"></div>
+      </div>
+      <a href="#contact" class="btn-outline" style="border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.7);" data-key="ass_cta">Zobrazit vše</a>
+    </div>
+
+    <div class="assortment-grid">
+      <div class="product-card reveal">
+        <div class="product-thumb">🌹</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p1_name">Růže</div>
+          <div class="product-desc" data-key="p1_desc">Klasická elegance v desítkách barev — červená, bílá, žlutá, meruňková a mnoho dalších.</div>
+          <span class="product-tag" data-key="p1_tag">Oblíbené</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🌷</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p2_name">Tulipány</div>
+          <div class="product-desc" data-key="p2_desc">Jarní svěžest a elegance — dostupné v široké paletě barev po celou sezónu.</div>
+          <span class="product-tag" data-key="p2_tag">Jarní</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🌸</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p3_name">Orchideje</div>
+          <div class="product-desc" data-key="p3_desc">Exotická krása pro interiér — phalaenopsis, cymbidium a další druhy v elegantních nádobách.</div>
+          <span class="product-tag" data-key="p3_tag">Prémiové</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🌻</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p4_name">Slunečnice</div>
+          <div class="product-desc" data-key="p4_desc">Radostné a energické — ideální pro brighten any space and bring a smile to someone's face.</div>
+          <span class="product-tag" data-key="p4_tag">Letní</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">💐</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p5_name">Smíšené kytice</div>
+          <div class="product-desc" data-key="p5_desc">Profesionálně sestavené kytice na míru pro každou příležitost a každý vkus.</div>
+          <span class="product-tag" data-key="p5_tag">Na míru</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🌿</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p6_name">Zeleň & dekorace</div>
+          <div class="product-desc" data-key="p6_desc">Eukalyptus, pampa tráva, sušené květiny a sezónní dekorativní větve pro moderní interiéry.</div>
+          <span class="product-tag" data-key="p6_tag">Trend</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🌺</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p7_name">Lilie & frezie</div>
+          <div class="product-desc" data-key="p7_desc">Voňavé klasiky s dlouhou trvanlivostí — vynikající volba pro romantické příležitosti.</div>
+          <span class="product-tag" data-key="p7_tag">Voňavé</span>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-thumb">🪴</div>
+        <div class="product-info">
+          <div class="product-name" data-key="p8_name">Pokojové rostliny</div>
+          <div class="product-desc" data-key="p8_desc">Monstera, fikus, sukulenty, kaktus — živá výzdoba pro každý domov nebo kancelář.</div>
+          <span class="product-tag" data-key="p8_tag">Celoroční</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner reveal">
+    <div class="section-tag" data-key="cnt_tag">Kontakt</div>
+    <h2 class="contact-title" data-key="cnt_title">Přijďte nás <em style="font-style:italic;">navštívit</em><br>nebo zavolejte</h2>
+    <p class="contact-sub" data-key="cnt_sub">Jsme tady pro vás od pondělí do pátku 9:00–17:00 a v sobotu 8:00–12:00. Těšíme se na vaši návštěvu!</p>
+
+    <div class="contact-info">
+      <div class="contact-item">
+        <div class="contact-label" data-key="cnt_addr_lbl">Adresa</div>
+        <a href="https://maps.app.goo.gl/DGGowz1NwynWFb4FA" target="_blank" class="contact-value">Zahradní 607/9, Cheb 2</a>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label" data-key="cnt_phone_lbl">Telefon</div>
+        <a href="tel:+420354434322" class="contact-value">+420 354 434 322</a>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label" data-key="cnt_hours_lbl">Otevírací doba</div>
+        <div class="contact-value" data-key="cnt_hours">Po–Pá 9–17 · So 8–12</div>
+      </div>
+    </div>
+
+    <a href="https://maps.app.goo.gl/DGGowz1NwynWFb4FA" target="_blank" class="btn-white" data-key="cnt_map_btn">Otevřít v mapách</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Kvety Hana</div>
+  <div class="footer-txt" data-key="footer_txt">© 2024 Kvety Hana · Cheb · Zahradní 607/9</div>
+  <div class="footer-hours" data-key="footer_hours">Po–Pá: 9:00–17:00<br>So: 8:00–12:00 · Ne: Zavřeno</div>
+</footer>
+
+<script>
+  // ─── LOADER DISMISS ───
+  setTimeout(() => {
+    const l = document.getElementById('loader');
+    l.style.animation = 'loaderFadeOut .7s ease forwards';
+    setTimeout(() => l.style.display = 'none', 700);
+  }, 3200);
+
+  // ─── NAV SCROLL ───
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // ─── MOBILE MENU ───
+  function toggleMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+
+  // ─── REVEAL ON SCROLL ───
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(r => obs.observe(r));
+
+  // ─── MULTILINGUAL ───
+  const translations = {
+    cs: {
+      nav_about:'O nás', nav_adv:'Výhody', nav_svc:'Služby', nav_ass:'Sortiment', nav_cnt:'Kontakt',
+      hero_tag:'✦ Cheb, Česká republika',
+      hero_title:'Krása přírody<br>ve <em>vašem domově</em>',
+      hero_sub:'Zahradní 607/9 · Cheb 2 · +420 354 434 322',
+      hero_cta1:'Naše služby', hero_cta2:'Kontaktujte nás',
+      scroll_down:'Rolovat',
+      about_tag:'O nás',
+      about_img_caption:'S láskou k přírodě',
+      about_fresh:'Čerstvé každý den',
+      about_years:'let zkušeností',
+      about_title:'Váš <em>oblíbený</em> květinář<br>v Chebu',
+      about_p1:'Jsme rodinná květinářství s dlouholetou tradicí v srdci Chebu. Nabízíme čerstvé kvety a dekorace pro každou příležitost — od každodenní krásy až po nezapomenutelné oslavy.',
+      about_p2:'Naše pracovnice s vášní tvoří kytice, věnce a aranžmá, která přinášejí radost a život do každého prostoru. Svěřte se našim zkušeným rukám.',
+      about_cta:'Navštivte nás',
+      adv_tag:'Proč my', adv_title:'Naše <em>výhody</em>',
+      adv_intro:'Každý zákazník je pro nás výjimečný. Přinášíme vám to nejlepší z přírody s péčí a odborností, na které se můžete spolehnout.',
+      adv1_title:'Čerstvost zaručena', adv1_desc:'Každý den dodáváme čerstvé květiny přímo od pěstitelů. Kytice, které u nás zakoupíte, vydrží déle a zůstanou krásné.',
+      adv2_title:'Individuální přístup', adv2_desc:'Každý zákazník dostane osobní péči. Pomůžeme vám vybrat ideální kytici nebo aranžmá pro každou příležitost.',
+      adv3_title:'Bohatý sortiment', adv3_desc:'Nabízíme stovky druhů květin, dekorací, sezónních rostlin a doplňků pro váš domov i zahradu.',
+      adv4_title:'Hodnocení 4.8 ★', adv4_desc:'Naši zákazníci nás milují. Přes 180 kladných hodnocení na Google svědčí o naší kvalitě a profesionalitě.',
+      svc_tag:'Služby', svc_title:'Co pro vás <em>uděláme</em>',
+      svc1_title:'Svatební výzdoba', svc1_desc:'Nevěstin buket, dekorace stolu, slavobrána, věnce — váš velký den bude nezapomenutelný s naší květinovou magií.',
+      svc2_title:'Slavnostní příležitosti', svc2_desc:'Narozeniny, výročí, promoce, svátky — přineste radost a krásu svým blízkým s originálním aranžmá.',
+      svc3_title:'Pohřební věnce', svc3_desc:'V těžkých chvílích vám pomůžeme vyjádřit pietu a úctu prostřednictvím věnců a smuteční výzdoby.',
+      svc4_title:'Firemní dekorace', svc4_desc:'Proměňte svůj podnik v krásné místo. Nabízíme pravidelné dodávky čerstvých aranžmá pro kanceláře a hotely.',
+      svc5_title:'Pokojové rostliny', svc5_desc:'Velký výběr pokojových rostlin, orchidejí a sukulentů s odborným poradenstvím pro péči o ně.',
+      svc6_title:'Dárkové koše', svc6_desc:'Kombinace květin, sušených plodů a dekorací v krásném balení — ideální dar pro každého.',
+      ass_tag:'Sortiment', ass_title:'Naše <em>květiny</em>', ass_cta:'Zobrazit vše',
+      p1_name:'Růže', p1_desc:'Klasická elegance v desítkách barev — červená, bílá, žlutá, meruňková a mnoho dalších.', p1_tag:'Oblíbené',
+      p2_name:'Tulipány', p2_desc:'Jarní svěžest a elegance — dostupné v široké paletě barev po celou sezónu.', p2_tag:'Jarní',
+      p3_name:'Orchideje', p3_desc:'Exotická krása pro interiér — phalaenopsis, cymbidium a další druhy v elegantních nádobách.', p3_tag:'Prémiové',
+      p4_name:'Slunečnice', p4_desc:'Radostné a energické — ideální pro rozjasnění každého prostoru a úsměv na tváři.', p4_tag:'Letní',
+      p5_name:'Smíšené kytice', p5_desc:'Profesionálně sestavené kytice na míru pro každou příležitost a každý vkus.', p5_tag:'Na míru',
+      p6_name:'Zeleň & dekorace', p6_desc:'Eukalyptus, pampa tráva, sušené květiny a sezónní dekorativní větve pro moderní interiéry.', p6_tag:'Trend',
+      p7_name:'Lilie & frezie', p7_desc:'Voňavé klasiky s dlouhou trvanlivostí — vynikající volba pro romantické příležitosti.', p7_tag:'Voňavé',
+      p8_name:'Pokojové rostliny', p8_desc:'Monstera, fikus, sukulenty, kaktus — živá výzdoba pro každý domov nebo kancelář.', p8_tag:'Celoroční',
+      cnt_tag:'Kontakt', cnt_title:'Přijďte nás <em>navštívit</em><br>nebo zavolejte',
+      cnt_sub:'Jsme tady pro vás od pondělí do pátku 9:00–17:00 a v sobotu 8:00–12:00. Těšíme se na vaši návštěvu!',
+      cnt_addr_lbl:'Adresa', cnt_phone_lbl:'Telefon', cnt_hours_lbl:'Otevírací doba',
+      cnt_hours:'Po–Pá 9–17 · So 8–12', cnt_map_btn:'Otevřít v mapách',
+      footer_txt:'© 2024 Kvety Hana · Cheb · Zahradní 607/9',
+      footer_hours:'Po–Pá: 9:00–17:00<br>So: 8:00–12:00 · Ne: Zavřeno'
+    },
+    en: {
+      nav_about:'About', nav_adv:'Benefits', nav_svc:'Services', nav_ass:'Assortment', nav_cnt:'Contact',
+      hero_tag:'✦ Cheb, Czech Republic',
+      hero_title:'Nature\'s beauty<br>in <em>your home</em>',
+      hero_sub:'Zahradní 607/9 · Cheb 2 · +420 354 434 322',
+      hero_cta1:'Our Services', hero_cta2:'Contact Us',
+      scroll_down:'Scroll',
+      about_tag:'About Us',
+      about_img_caption:'With love for nature',
+      about_fresh:'Fresh every day',
+      about_years:'years of experience',
+      about_title:'Your <em>favourite</em> florist<br>in Cheb',
+      about_p1:'We are a family florist with a long tradition in the heart of Cheb. We offer fresh flowers and decorations for every occasion — from everyday beauty to unforgettable celebrations.',
+      about_p2:'Our passionate staff creates bouquets, wreaths and arrangements that bring joy and life to every space. Trust your needs to our experienced hands.',
+      about_cta:'Visit Us',
+      adv_tag:'Why Us', adv_title:'Our <em>advantages</em>',
+      adv_intro:'Every customer is special to us. We bring you the best of nature with care and expertise you can rely on.',
+      adv1_title:'Freshness guaranteed', adv1_desc:'We deliver fresh flowers directly from growers every day. Bouquets purchased with us last longer and stay beautiful.',
+      adv2_title:'Personal approach', adv2_desc:'Every customer receives personal attention. We help you choose the perfect bouquet or arrangement for every occasion.',
+      adv3_title:'Wide assortment', adv3_desc:'We offer hundreds of flower varieties, decorations, seasonal plants and accessories for your home and garden.',
+      adv4_title:'Rating 4.8 ★', adv4_desc:'Our customers love us. Over 180 positive Google reviews attest to our quality and professionalism.',
+      svc_tag:'Services', svc_title:'What we\'ll <em>do for you</em>',
+      svc1_title:'Wedding decoration', svc1_desc:'Bridal bouquet, table decoration, archway, wreaths — your big day will be unforgettable with our floral magic.',
+      svc2_title:'Festive occasions', svc2_desc:'Birthdays, anniversaries, graduations, holidays — bring joy and beauty to your loved ones with original arrangements.',
+      svc3_title:'Funeral wreaths', svc3_desc:'In difficult moments we help you express respect and tribute through wreaths and mourning decoration.',
+      svc4_title:'Corporate decoration', svc4_desc:'Transform your business into a beautiful place. We offer regular fresh arrangement deliveries for offices and hotels.',
+      svc5_title:'Indoor plants', svc5_desc:'Wide selection of houseplants, orchids and succulents with expert advice on how to care for them.',
+      svc6_title:'Gift baskets', svc6_desc:'Combination of flowers, dried fruits and decorations in beautiful packaging — ideal gift for everyone.',
+      ass_tag:'Assortment', ass_title:'Our <em>flowers</em>', ass_cta:'View all',
+      p1_name:'Roses', p1_desc:'Classic elegance in dozens of colours — red, white, yellow, apricot and many more.', p1_tag:'Favourite',
+      p2_name:'Tulips', p2_desc:'Spring freshness and elegance — available in a wide palette of colours throughout the season.', p2_tag:'Spring',
+      p3_name:'Orchids', p3_desc:'Exotic beauty for interiors — phalaenopsis, cymbidium and other species in elegant pots.', p3_tag:'Premium',
+      p4_name:'Sunflowers', p4_desc:'Joyful and energetic — perfect for brightening any space and bringing a smile to someone\'s face.', p4_tag:'Summer',
+      p5_name:'Mixed bouquets', p5_desc:'Professionally assembled bespoke bouquets for every occasion and every taste.', p5_tag:'Custom',
+      p6_name:'Greenery & decor', p6_desc:'Eucalyptus, pampas grass, dried flowers and seasonal decorative branches for modern interiors.', p6_tag:'Trending',
+      p7_name:'Lilies & freesias', p7_desc:'Fragrant classics with long vase life — an excellent choice for romantic occasions.', p7_tag:'Fragrant',
+      p8_name:'Houseplants', p8_desc:'Monstera, ficus, succulents, cactus — living decoration for any home or office.', p8_tag:'Year-round',
+      cnt_tag:'Contact', cnt_title:'Come <em>visit us</em><br>or give us a call',
+      cnt_sub:'We are here for you Monday to Friday 9:00–17:00 and Saturday 8:00–12:00. We look forward to your visit!',
+      cnt_addr_lbl:'Address', cnt_phone_lbl:'Phone', cnt_hours_lbl:'Opening hours',
+      cnt_hours:'Mon–Fri 9–17 · Sat 8–12', cnt_map_btn:'Open in Maps',
+      footer_txt:'© 2024 Kvety Hana · Cheb · Zahradní 607/9',
+      footer_hours:'Mon–Fri: 9:00–17:00<br>Sat: 8:00–12:00 · Sun: Closed'
+    },
+    de: {
+      nav_about:'Über uns', nav_adv:'Vorteile', nav_svc:'Leistungen', nav_ass:'Sortiment', nav_cnt:'Kontakt',
+      hero_tag:'✦ Cheb, Tschechische Republik',
+      hero_title:'Die Schönheit der Natur<br>in <em>Ihrem Zuhause</em>',
+      hero_sub:'Zahradní 607/9 · Cheb 2 · +420 354 434 322',
+      hero_cta1:'Unsere Leistungen', hero_cta2:'Kontaktieren Sie uns',
+      scroll_down:'Scrollen',
+      about_tag:'Über uns',
+      about_img_caption:'Mit Liebe zur Natur',
+      about_fresh:'Täglich frisch',
+      about_years:'Jahre Erfahrung',
+      about_title:'Ihr <em>Lieblings</em>-Blumenladen<br>in Cheb',
+      about_p1:'Wir sind ein familiengeführtes Blumengeschäft mit langer Tradition im Herzen von Cheb. Wir bieten frische Blumen und Dekorationen für jeden Anlass — von der alltäglichen Schönheit bis zu unvergesslichen Feiern.',
+      about_p2:'Unsere leidenschaftlichen Mitarbeiterinnen kreieren Sträuße, Kränze und Arrangements, die jedem Raum Freude und Leben verleihen.',
+      about_cta:'Besuchen Sie uns',
+      adv_tag:'Warum wir', adv_title:'Unsere <em>Vorteile</em>',
+      adv_intro:'Jeder Kunde ist für uns besonders. Wir bringen Ihnen das Beste der Natur mit Sorgfalt und Fachwissen.',
+      adv1_title:'Frische garantiert', adv1_desc:'Wir liefern täglich frische Blumen direkt von den Züchtern. Sträuße von uns halten länger und bleiben schön.',
+      adv2_title:'Persönlicher Service', adv2_desc:'Jeder Kunde erhält persönliche Betreuung. Wir helfen Ihnen, den idealen Strauß oder das passende Arrangement zu wählen.',
+      adv3_title:'Großes Sortiment', adv3_desc:'Wir führen hunderte Blumensorten, Dekorationen, Saisonpflanzen und Zubehör für Ihr Zuhause und den Garten.',
+      adv4_title:'Bewertung 4,8 ★', adv4_desc:'Unsere Kunden lieben uns. Über 180 positive Google-Bewertungen belegen unsere Qualität und Professionalität.',
+      svc_tag:'Leistungen', svc_title:'Was wir <em>für Sie tun</em>',
+      svc1_title:'Hochzeitsdekoration', svc1_desc:'Brautstrauß, Tischdekoration, Torbogen, Kränze — Ihr großer Tag wird mit unserer Blumenmagie unvergesslich.',
+      svc2_title:'Festliche Anlässe', svc2_desc:'Geburtstage, Jubiläen, Abschlüsse, Feiertage — bereiten Sie Ihren Lieben mit originellen Arrangements Freude.',
+      svc3_title:'Trauerkränze', svc3_desc:'In schweren Zeiten helfen wir Ihnen, Respekt und Mitgefühl durch Kränze und Trauerschmuck auszudrücken.',
+      svc4_title:'Firmendekoration', svc4_desc:'Verwandeln Sie Ihr Unternehmen in einen schönen Ort. Regelmäßige Lieferungen für Büros und Hotels.',
+      svc5_title:'Zimmerpflanzen', svc5_desc:'Große Auswahl an Zimmerpflanzen, Orchideen und Sukkulenten mit fachkundiger Beratung zur Pflege.',
+      svc6_title:'Geschenkkörbe', svc6_desc:'Kombination aus Blumen, getrockneten Früchten und Dekorationen in schöner Verpackung — das ideale Geschenk.',
+      ass_tag:'Sortiment', ass_title:'Unsere <em>Blumen</em>', ass_cta:'Alle anzeigen',
+      p1_name:'Rosen', p1_desc:'Klassische Eleganz in Dutzenden von Farben — Rot, Weiß, Gelb, Apricot und viele mehr.', p1_tag:'Beliebt',
+      p2_name:'Tulpen', p2_desc:'Frühlingsfrische und Eleganz — in breiter Farbpalette die gesamte Saison verfügbar.', p2_tag:'Frühling',
+      p3_name:'Orchideen', p3_desc:'Exotische Schönheit fürs Interieur — Phalaenopsis, Cymbidium und weitere Arten in eleganten Töpfen.', p3_tag:'Premium',
+      p4_name:'Sonnenblumen', p4_desc:'Fröhlich und energetisch — ideal für jeden Raum und ein Lächeln im Gesicht.', p4_tag:'Sommer',
+      p5_name:'Gemischte Sträuße', p5_desc:'Professionell zusammengestellte Sträuße nach Maß für jeden Anlass und jeden Geschmack.', p5_tag:'Individuell',
+      p6_name:'Grünpflanzen & Deko', p6_desc:'Eukalyptus, Pampagras, Trockenblumen und Saisonzweige für moderne Innenräume.', p6_tag:'Trend',
+      p7_name:'Lilien & Freesien', p7_desc:'Duftende Klassiker mit langer Haltbarkeit — hervorragende Wahl für romantische Anlässe.', p7_tag:'Duftend',
+      p8_name:'Zimmerpflanzen', p8_desc:'Monstera, Ficus, Sukkulenten, Kaktus — lebendige Dekoration für jedes Zuhause oder Büro.', p8_tag:'Ganzjährig',
+      cnt_tag:'Kontakt', cnt_title:'Besuchen <em>Sie uns</em><br>oder rufen Sie an',
+      cnt_sub:'Wir sind für Sie Montag bis Freitag 9:00–17:00 Uhr und Samstag 8:00–12:00 Uhr da.',
+      cnt_addr_lbl:'Adresse', cnt_phone_lbl:'Telefon', cnt_hours_lbl:'Öffnungszeiten',
+      cnt_hours:'Mo–Fr 9–17 · Sa 8–12', cnt_map_btn:'In Maps öffnen',
+      footer_txt:'© 2024 Kvety Hana · Cheb · Zahradní 607/9',
+      footer_hours:'Mo–Fr: 9:00–17:00<br>Sa: 8:00–12:00 · So: Geschlossen'
+    },
+    ru: {
+      nav_about:'О нас', nav_adv:'Преимущества', nav_svc:'Услуги', nav_ass:'Ассортимент', nav_cnt:'Контакт',
+      hero_tag:'✦ Хеб, Чешская Республика',
+      hero_title:'Красота природы<br>в <em>вашем доме</em>',
+      hero_sub:'Zahradní 607/9 · Cheb 2 · +420 354 434 322',
+      hero_cta1:'Наши услуги', hero_cta2:'Связаться с нами',
+      scroll_down:'Прокрутить',
+      about_tag:'О нас',
+      about_img_caption:'С любовью к природе',
+      about_fresh:'Свежие каждый день',
+      about_years:'лет опыта',
+      about_title:'Ваш <em>любимый</em> цветочный<br>магазин в Хебе',
+      about_p1:'Мы — семейный цветочный магазин с многолетними традициями в самом сердце Хеба. Предлагаем свежие цветы и декор для любого случая — от повседневной красоты до незабываемых торжеств.',
+      about_p2:'Наши мастерицы с passion создают букеты, венки и аранжировки, которые приносят радость и жизнь в каждое пространство.',
+      about_cta:'Посетите нас',
+      adv_tag:'Почему мы', adv_title:'Наши <em>преимущества</em>',
+      adv_intro:'Каждый клиент для нас особенный. Мы привносим лучшее из природы с заботой и профессионализмом.',
+      adv1_title:'Свежесть гарантирована', adv1_desc:'Каждый день доставляем свежие цветы прямо от производителей. Купленные у нас букеты дольше сохраняют красоту.',
+      adv2_title:'Индивидуальный подход', adv2_desc:'Каждый клиент получает личное внимание. Поможем выбрать идеальный букет или аранжировку для любого случая.',
+      adv3_title:'Богатый ассортимент', adv3_desc:'Сотни видов цветов, декора, сезонных растений и аксессуаров для дома и сада.',
+      adv4_title:'Рейтинг 4,8 ★', adv4_desc:'Наши клиенты нас любят. Более 180 положительных отзывов на Google — свидетельство нашего качества и профессионализма.',
+      svc_tag:'Услуги', svc_title:'Что мы <em>сделаем для вас</em>',
+      svc1_title:'Свадебное оформление', svc1_desc:'Букет невесты, украшение стола, арка, венки — ваш особый день будет незабываемым с нашей цветочной магией.',
+      svc2_title:'Торжественные события', svc2_desc:'Дни рождения, юбилеи, выпускные, праздники — подарите радость и красоту своим близким.',
+      svc3_title:'Траурные венки', svc3_desc:'В трудные моменты поможем выразить дань уважения через венки и траурное оформление.',
+      svc4_title:'Корпоративный декор', svc4_desc:'Превратите ваш бизнес в красивое место. Регулярные поставки свежих аранжировок для офисов и гостиниц.',
+      svc5_title:'Комнатные растения', svc5_desc:'Большой выбор комнатных растений, орхидей и суккулентов с экспертными советами по уходу.',
+      svc6_title:'Подарочные корзины', svc6_desc:'Сочетание цветов, сухофруктов и декора в красивой упаковке — идеальный подарок для каждого.',
+      ass_tag:'Ассортимент', ass_title:'Наши <em>цветы</em>', ass_cta:'Смотреть всё',
+      p1_name:'Розы', p1_desc:'Классическая элегантность в десятках цветов — красный, белый, жёлтый, абрикосовый и многие другие.', p1_tag:'Популярное',
+      p2_name:'Тюльпаны', p2_desc:'Весенняя свежесть и элегантность — доступны в широкой палитре цветов на протяжении всего сезона.', p2_tag:'Весенние',
+      p3_name:'Орхидеи', p3_desc:'Экзотическая красота для интерьера — phalaenopsis, cymbidium и другие виды в элегантных вазонах.', p3_tag:'Премиум',
+      p4_name:'Подсолнухи', p4_desc:'Радостные и энергичные — идеальны для украшения любого пространства и улыбки на лице.', p4_tag:'Летние',
+      p5_name:'Смешанные букеты', p5_desc:'Профессионально составленные букеты на заказ для любого случая и любого вкуса.', p5_tag:'На заказ',
+      p6_name:'Зелень & декор', p6_desc:'Эвкалипт, пампасная трава, сухоцветы и сезонные ветви для современных интерьеров.', p6_tag:'Тренд',
+      p7_name:'Лилии & фрезии', p7_desc:'Душистая классика с долгим сроком жизни — отличный выбор для романтических событий.', p7_tag:'Ароматные',
+      p8_name:'Комнатные растения', p8_desc:'Монстера, фикус, суккуленты, кактус — живое украшение для любого дома или офиса.', p8_tag:'Круглогодично',
+      cnt_tag:'Контакт', cnt_title:'Приходите <em>к нам</em><br>или позвоните',
+      cnt_sub:'Мы здесь для вас с понедельника по пятницу 9:00–17:00 и в субботу 8:00–12:00. Ждём вас!',
+      cnt_addr_lbl:'Адрес', cnt_phone_lbl:'Телефон', cnt_hours_lbl:'Часы работы',
+      cnt_hours:'Пн–Пт 9–17 · Сб 8–12', cnt_map_btn:'Открыть на карте',
+      footer_txt:'© 2024 Kvety Hana · Cheb · Zahradní 607/9',
+      footer_hours:'Пн–Пт: 9:00–17:00<br>Сб: 8:00–12:00 · Вс: Закрыто'
+    }
+  };
+
+  let currentLang = 'cs';
+
+  function setLang(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (t[key] !== undefined) el.innerHTML = t[key];
+    });
+    // update html lang attr
+    document.documentElement.lang = lang;
+    // update active buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.toLowerCase() === lang);
+    });
+  }
+</script>
+</body>
+</html>
